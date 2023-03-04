@@ -77,7 +77,7 @@ end_regex = r"C´ ıl: \(\[(\d{1}), (\d{1})\], X, \[\?, \?\]\)"
 end_match = re.search(end_regex, pdf_text)
 if not args.silent:
     print("\t", end_match.groups())
-name_and_login_regex = r"Jm´ eno: (.*)\nLogin: (x.*)\n"
+name_and_login_regex = r"Jm´ eno:\ *(.*)\nLogin: (x.*)\n"
 name_and_login_match = re.search(name_and_login_regex, pdf_text)
 if not args.silent:
     print("\t", name_and_login_match.groups())

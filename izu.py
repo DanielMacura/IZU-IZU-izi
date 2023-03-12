@@ -8,6 +8,7 @@ import copy
 import argparse
 import glob
 
+
 def print_grid(grid, indent=0):
     for i in range(grid.shape[0]):
         print("\t" * indent, end="")
@@ -17,6 +18,7 @@ def print_grid(grid, indent=0):
             else:
                 print(grid[i][j], end=" ")
         print()
+
 
 parser = argparse.ArgumentParser(description="IZU IZU izi ;)")
 parser.add_argument(
@@ -93,6 +95,7 @@ grid_f = np.zeros(shape=(10, 10))
 grid_f.fill(-1)
 grid_g = np.zeros(shape=(10, 10))
 
+
 class Point:
     def __init__(self, x, y, parent=None):
         self.x = x
@@ -101,10 +104,13 @@ class Point:
         self.g_for_export = 0
         self.h_for_export = 0
         self.f_for_export = 0
+
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
+
     def __hash__(self):
         return hash((self.x, self.y, self.parent))
+
     def __repr__(self):
         if self.parent is None:
             return "([{}, {}], {}, [null])".format(
@@ -118,6 +124,7 @@ class Point:
             self.parent.y,
         )
 
+
 start_point = Point(
     int(start_match.group(1)),
     int(start_match.group(2)),
@@ -127,6 +134,8 @@ start_point.f_for_export = float(start_match.group(3))
 
 CLOSED = []
 OPEN = [start_point]
+WORK_ORDER = [start_point]
+
 
 def distance(first_point, second_point):
     return round(
@@ -137,28 +146,25 @@ def distance(first_point, second_point):
         2,
     )
 
+
 def moore_neighbours(point):
     neighbours = []
-    for i in reversed(
-        range(
+    for j in range(
             -1,
             2,
-        )
-    ):
-        for j in reversed(range(-1, 2)):
+        ):
+        for i in range(-1, 2):
             if i == 0 and j == 0:
                 continue
-            if (
-                point.x + i < 0
-                or point.x + i > 9
-                or point.y + j < 0
-                or point.y + j > 9
-            ):
+            if point.x + i < 0 or point.x + i > 9 or point.y + j < 0 or point.y + j > 9:
                 continue
             if grid_cost[point.y + j][point.x + i] == -1:
                 continue
             neighbours.append(Point(point.x + i, point.y + j, point))
+            if Point(point.x + i, point.y + j, point) not in WORK_ORDER:
+                WORK_ORDER.append(Point(point.x + i, point.y + j, point))
     return neighbours
+
 
 def calculate_step(current):
     for neighbour in moore_neighbours(current):
@@ -174,16 +180,17 @@ def calculate_step(current):
             or grid_g[neighbour.y][neighbour.x] == 0
         ):
             grid_g[neighbour.y][neighbour.x] = (
-                grid_g[current.y][current.x]
-                + grid_cost[neighbour.y][neighbour.x]
+                grid_g[current.y][current.x] + grid_cost[neighbour.y][neighbour.x]
             )
             grid_f[neighbour.y][neighbour.x] = grid_g[neighbour.y][
                 neighbour.x
             ] + distance(neighbour, end_point)
             neighbour.f_for_export = grid_f[neighbour.y][neighbour.x]
 
+
 step = 0
 iterations = []
+
 
 def update_points_for_export():
     for point in OPEN:
@@ -191,6 +198,10 @@ def update_points_for_export():
         point.h_for_export = round(distance(point, end_point), 2)
         point.f_for_export = round(grid_f[point.y][point.x], 2)
     for point in CLOSED:
+        point.g_for_export = round(grid_g[point.y][point.x], 2)
+        point.h_for_export = round(distance(point, end_point), 2)
+        point.f_for_export = round(grid_f[point.y][point.x], 2)
+    for point in WORK_ORDER:
         point.g_for_export = round(grid_g[point.y][point.x], 2)
         point.h_for_export = round(distance(point, end_point), 2)
         point.f_for_export = round(grid_f[point.y][point.x], 2)
@@ -263,7 +274,7 @@ gen.vysledna_cesta = list(map(lambda x: (x.x, x.y), path))
 listtt = list(
     map(
         lambda x: ((x.x, x.y), x.g_for_export, x.h_for_export, x.f_for_export),
-        CLOSED,
+        WORK_ORDER,
     )
 )
 
